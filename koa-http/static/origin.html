@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>cross-origin test</title>
+</head>
+<body style="width: 600px; margin: 200px auto; text-align: center">
+  <button onclick="getAjax()">AJAX</button>
+  <button onclick="getJsonP()">JSONP</button>
+  <button onclick="getCors()">CORS</button>
+</body>
+<script type="text/javascript">
+  // get请求
+  // var baseUrl = 'http://10.2.121.111:3200';
+  // jsonp请求
+  var baseUrl = 'http://10.2.121.111:3201';
+
+  function getAjax() {
+    var xhr = new XMLHttpRequest();            
+    xhr.open('GET',  baseUrl + '/ajax', true);
+    xhr.onreadystatechange = function() {
+      // readyState == 4说明请求已完成
+      if (xhr.readyState == 4 && xhr.status == 200 || xhr.status == 304) { 
+        // 从服务器获得数据  
+        // alert(xhr.responseText);
+      } else {
+        // console.log(xhr.status);
+      }
+    };
+    xhr.send();
+  }
+
+  function getJsonP() {
+      var script = document.createElement('script');
+      script.src = baseUrl + '/jsonp?type=json&callback=onBack';
+      document.head.appendChild(script);
+  }
+  function onBack(res) {
+    alert('JSONP CALLBACK:  ', JSON.stringify(res)); 
+  }
+
+  var ajaxHdFn = function(uri, data, cb) {
+    var xhr = new XMLHttpRequest();
+    //  xhr.withCredentials = true;
+   
+   xhr.open("POST", uri, true);
+
+   xhr.setRequestHeader('Accept','application/json')
+    //  xhr.setRequestHeader("DeviceCode", "56");
+    //  xhr.setRequestHeader("Source", "API");
+    //  xhr.setRequestHeader("Authentication", "72b32a1f754ba1c09b3695e0cb6cde7f");
+   xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+   var tsp = (new Date()).getTime()
+  //  xhr.setRequestHeader("Date", tsp)
+  //  xhr.setRequestHeader("tsp", tsp)
+
+   xhr.onreadystatechange = function() {
+    //  console.log(xhr.readyState);
+     if (xhr.readyState === 4 && xhr.status === 200) {
+       //获取成功后执行操作
+       //数据在xhr.responseText
+       try {
+          var resJson = JSON.parse(xhr.responseText)
+       } catch (e) {
+          console.log(e+'不好意思出错了哦')
+          var resJson = eval('('+xhr.responseText+')')
+       }
+       cb(resJson);
+     }
+   };
+   var dataStr = '';
+   for (var i in data) {
+     if (dataStr) {
+       dataStr += '&';
+     }
+     dataStr += i + '=' + data[i];
+   }
+   xhr.send(dataStr);
+}
+
+function getCors () {
+  ajaxHdFn('http://10.2.120.28:3201/cors/test1', '', function (data) {
+    console.log('cors成功1'+JSON.stringify(data))
+  })
+
+  var data = {"param1":'key1',"param2":'key2'}
+  setTimeout(function () {
+    ajaxHdFn('http://10.2.120.28:3201/cors/test2', data, function (data) {
+      console.log('cors成功2'+JSON.stringify(data))
+    })
+  }, 1000)
+
+  ajaxHdFn('http://10.2.120.28:3201/cors/test3', data, function (data) {
+    console.log('cors成功3'+JSON.stringify(data))
+  })
+}
+</script>
+</html>
